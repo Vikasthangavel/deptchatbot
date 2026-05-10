@@ -102,7 +102,7 @@ def index():
                 state["messages"] = []
                 current_url = state["url"]
 
-        if not error:
+        elif action == "ask":
             if not state["url"]:
                 error = "Please paste a website URL first."
             elif not question:
@@ -121,13 +121,17 @@ def index():
         current_url = state["url"]
         chat_history = state["messages"]
 
-        return render_template(
-                "index.html",
-                answer=answer,
-                error=error,
-                current_url=current_url,
-                chat_history=chat_history,
-        )
+    else:
+        current_url = state["url"]
+        chat_history = state["messages"]
+
+    return render_template(
+        "index.html",
+        answer=answer,
+        error=error,
+        current_url=current_url,
+        chat_history=chat_history,
+    )
 
 
 if __name__ == "__main__":
