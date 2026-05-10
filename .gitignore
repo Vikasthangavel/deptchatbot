@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+dept_vector_db/
+tempCodeRunnerFile.py

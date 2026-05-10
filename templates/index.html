@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Web Chatbot</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --border: #d8e1ea;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --accent-2: #eff6ff;
+        --user: #dbeafe;
+        --assistant: #ecfdf5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .wrap {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+
+      .subtext {
+        margin: 0 0 18px;
+        color: var(--muted);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 15px;
+        background: #fff;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+      }
+
+      button.secondary {
+        background: #e5e7eb;
+        color: #111827;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .status {
+        margin-top: 16px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--accent-2);
+        border: 1px solid #c7ddff;
+      }
+
+      .error {
+        margin-top: 16px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+      }
+
+      .chat {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .message {
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+
+      .message.user {
+        background: var(--user);
+        margin-left: 10%;
+      }
+
+      .message.assistant {
+        background: var(--assistant);
+        margin-right: 10%;
+      }
+
+      .footer {
+        margin-top: 16px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 14px;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+
+        .message.user,
+        .message.assistant {
+          margin-left: 0;
+          margin-right: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Web Chatbot</h1>
+        <p class="subtext">Paste a website URL once, then keep asking questions about that site.</p>
+
+        <form method="post">
+          <input type="hidden" name="action" value="load">
+          <div>
+            <label for="url">Website URL</label>
+            <input
+              id="url"
+              type="text"
+              name="url"
+              placeholder="https://example.com"
+              value="{{ current_url or '' }}"
+            >
+          </div>
+          <div class="actions" style="margin-top: 14px;">
+            <button type="submit">Load site</button>
+          </div>
+        </form>
+
+        <form method="post" style="margin-top: 16px;">
+          <input type="hidden" name="action" value="ask">
+          <input type="hidden" name="url" value="{{ current_url or '' }}">
+          <div>
+            <label for="question">Your question</label>
+            <input
+              id="question"
+              type="text"
+              name="question"
+              placeholder="Ask about the loaded site"
+              {% if current_url %}autofocus{% endif %}
+            >
+          </div>
+          <div class="actions" style="margin-top: 14px;">
+            <button type="submit" {% if not current_url %}disabled{% endif %}>Ask</button>
+          </div>
+        </form>
+
+        {% if current_url %}
+          <div class="status">Current site: {{ current_url }}</div>
+        {% endif %}
+
+        {% if error %}
+          <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if chat_history %}
+          <div class="chat">
+            {% for message in chat_history %}
+              <div class="message {{ message.role }}">
+                <strong>{{ message.role|capitalize }}:</strong> {{ message.text }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="footer">Tip: if you change the URL, the conversation will restart for that site.</div>
+      </div>
+    </div>
+  </body>
+</html>
