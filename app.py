@@ -103,6 +103,12 @@ def index():
                 current_url = state["url"]
 
         elif action == "ask":
+            # Fallback: if session lost URL but form has it, reload it
+            if not state["url"] and url:
+                state["url"] = url
+                state["rag_chain"] = None
+                state["messages"] = []
+
             if not state["url"]:
                 error = "Please paste a website URL first."
             elif not question:
