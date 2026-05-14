@@ -501,6 +501,9 @@
         const question = questionInput.value.trim();
         if (!question) return;
 
+        // Capture form values before mutating UI state.
+        const formData = new FormData(messageForm);
+
         const emptyState = chatContainer.querySelector('.empty-state');
         if (emptyState) {
           emptyState.remove();
@@ -520,23 +523,25 @@
 
         fetch(messageForm.getAttribute('action') || '/', {
           method: 'POST',
-          body: new FormData(messageForm)
+          body: formData
         })
         .then(response => response.text())
         .then(html => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
-          const newMessages = doc.querySelectorAll('.message-group');
+          const newChatContainer = doc.getElementById('chatContainer');
 
           loadingBubble.remove();
 
-          if (newMessages.length > 0) {
-            const lastMessage = newMessages[newMessages.length - 1];
-            const assistantMessage = lastMessage.querySelector('.message.assistant');
-            if (assistantMessage) {
+          if (newChatContainer) {
+            chatContainer.innerHTML = newChatContainer.innerHTML;
+            scrollToBottom();
+          } else {
+            const errorMessage = doc.querySelector('.alert.error');
+            if (errorMessage) {
               const responseBubble = document.createElement('div');
               responseBubble.className = 'message-group';
-              responseBubble.innerHTML = `<div class="message assistant">${assistantMessage.innerHTML}</div>`;
+              responseBubble.innerHTML = `<div class="message assistant">${escapeHtml(errorMessage.textContent || 'Something went wrong.')}</div>`;
               chatContainer.appendChild(responseBubble);
               scrollToBottom();
             }
