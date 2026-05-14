@@ -518,7 +518,7 @@
         sendBtn.disabled = true;
         questionInput.value = '';
 
-        fetch(messageForm.action, {
+        fetch(messageForm.getAttribute('action') || '/', {
           method: 'POST',
           body: new FormData(messageForm)
         })
