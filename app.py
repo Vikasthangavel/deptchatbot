@@ -4,9 +4,8 @@ import uuid
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, session
 
-# OpenRouter API key is loaded from .env or the environment.
 load_dotenv()
-# LangChain imports
+
 from langchain_openai import ChatOpenAI
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.document_loaders import WebBaseLoader
@@ -21,7 +20,6 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
 chat_sessions = {}
 
-# Shared components (LLM + prompt)
 llm = ChatOpenAI(
     model="openai/gpt-4o-mini",
     base_url="https://openrouter.ai/api/v1",
