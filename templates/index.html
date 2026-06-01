@@ -501,14 +501,14 @@
         const question = questionInput.value.trim();
         if (!question) return;
 
-        // Capture form values before mutating UI state.
-        const formData = new FormData(messageForm);
+        // Read the current URL from the hidden field
+        const urlField = messageForm.querySelector('input[name="url"]');
+        const currentUrl = urlField ? urlField.value : '';
 
         const emptyState = chatContainer.querySelector('.empty-state');
-        if (emptyState) {
-          emptyState.remove();
-        }
+        if (emptyState) emptyState.remove();
 
+        // Show the user's message immediately
         const userBubble = document.createElement('div');
         userBubble.className = 'message-group user';
         userBubble.innerHTML = `<div class="message user">${escapeHtml(question)}</div>`;
@@ -521,39 +521,40 @@
         sendBtn.disabled = true;
         questionInput.value = '';
 
-        fetch(messageForm.getAttribute('action') || '/', {
+        // Call the dedicated JSON /chat endpoint (avoids ERR_CONNECTION_RESET)
+        fetch('/chat', {
           method: 'POST',
-          body: formData
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question, url: currentUrl })
         })
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const newChatContainer = doc.getElementById('chatContainer');
-
+        .then(response => {
+          if (!response.ok) throw new Error('Server error: ' + response.status);
+          return response.json();
+        })
+        .then(data => {
           loadingBubble.remove();
 
-          if (newChatContainer) {
-            chatContainer.innerHTML = newChatContainer.innerHTML;
-            scrollToBottom();
-          } else {
-            const errorMessage = doc.querySelector('.alert.error');
-            if (errorMessage) {
-              const responseBubble = document.createElement('div');
-              responseBubble.className = 'message-group';
-              responseBubble.innerHTML = `<div class="message assistant">${escapeHtml(errorMessage.textContent || 'Something went wrong.')}</div>`;
-              chatContainer.appendChild(responseBubble);
-              scrollToBottom();
-            }
-          }
+          const text = data.answer || data.error || 'Something went wrong.';
+          const responseBubble = document.createElement('div');
+          responseBubble.className = 'message-group';
+          responseBubble.innerHTML = `<div class="message assistant">${escapeHtml(text)}</div>`;
+          chatContainer.appendChild(responseBubble);
+          scrollToBottom();
 
           questionInput.disabled = false;
           sendBtn.disabled = false;
           questionInput.focus();
         })
-        .catch(error => {
-          console.error('Error:', error);
+        .catch(err => {
+          console.error('Fetch error:', err);
           loadingBubble.remove();
+
+          const errorBubble = document.createElement('div');
+          errorBubble.className = 'message-group';
+          errorBubble.innerHTML = `<div class="message assistant">⚠️ Connection error — please try again. (${escapeHtml(err.message)})</div>`;
+          chatContainer.appendChild(errorBubble);
+          scrollToBottom();
+
           questionInput.disabled = false;
           sendBtn.disabled = false;
         });

@@ -2,10 +2,11 @@ import os
 import uuid
 
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, jsonify
 
-# OpenRouter API key is loaded from .env or the environment.
+# Load .env file before anything else
 load_dotenv()
+
 # LangChain imports
 from langchain_openai import ChatOpenAI
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -21,12 +22,12 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key")
 
 chat_sessions = {}
 
-# Shared components (LLM + prompt)
+# Shared LLM (initialised once at startup)
 llm = ChatOpenAI(
     model="openai/gpt-4o-mini",
     base_url="https://openrouter.ai/api/v1",
     api_key=os.environ.get("OPENROUTER_API_KEY"),
-    temperature=0
+    temperature=0,
 )
 
 prompt = ChatPromptTemplate.from_template("""
@@ -54,7 +55,6 @@ def build_rag_chain_for_url(url: str):
 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-    # Create an in-memory Chroma vectorstore for this request
     vectorstore = Chroma.from_documents(docs, embeddings)
     retriever = vectorstore.as_retriever()
 
@@ -82,63 +82,70 @@ def get_session_state():
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    answer = None
-    error = None
-    current_url = None
-    chat_history = []
     state = get_session_state()
+    error = None
 
     if request.method == "POST":
-        action = request.form.get("action", "ask")
+        action = request.form.get("action", "load")
         url = request.form.get("url", "").strip()
-        question = request.form.get("question", "").strip()
 
         if action == "load":
             if not url:
                 error = "Please paste a website URL."
             else:
+                # Reset session for new URL
                 state["url"] = url
                 state["rag_chain"] = None
                 state["messages"] = []
-                current_url = state["url"]
-
-        elif action == "ask":
-            # Fallback: if session lost URL but form has it, reload it
-            if not state["url"] and url:
-                state["url"] = url
-                state["rag_chain"] = None
-                state["messages"] = []
-
-            if not state["url"]:
-                error = "Please paste a website URL first."
-            elif not question:
-                error = "Please enter a question."
-            else:
-                try:
-                    if state["rag_chain"] is None:
-                        state["rag_chain"] = build_rag_chain_for_url(state["url"])
-
-                    answer = state["rag_chain"].invoke(question)
-                    state["messages"].append({"role": "user", "text": question})
-                    state["messages"].append({"role": "assistant", "text": answer})
-                except Exception as e:
-                    error = str(e)
-
-        current_url = state["url"]
-        chat_history = state["messages"]
-
-    else:
-        current_url = state["url"]
-        chat_history = state["messages"]
 
     return render_template(
         "index.html",
-        answer=answer,
         error=error,
-        current_url=current_url,
-        chat_history=chat_history,
+        current_url=state["url"],
+        chat_history=state["messages"],
     )
 
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    """
+    JSON endpoint for the chat AJAX call.
+    Returns: {"answer": "...", "error": "..."}
+    This keeps the slow RAG work off the page-render route and prevents
+    ERR_CONNECTION_RESET caused by the debug reloader interrupting long requests.
+    """
+    state = get_session_state()
+
+    data = request.get_json(silent=True) or {}
+    question = (data.get("question") or "").strip()
+    url = (data.get("url") or "").strip()
+
+    # Allow the client to pass the URL in case the session was lost
+    if not state["url"] and url:
+        state["url"] = url
+        state["rag_chain"] = None
+        state["messages"] = []
+
+    if not state["url"]:
+        return jsonify({"error": "Please load a website URL first."})
+
+    if not question:
+        return jsonify({"error": "Please enter a question."})
+
+    try:
+        if state["rag_chain"] is None:
+            state["rag_chain"] = build_rag_chain_for_url(state["url"])
+
+        answer = state["rag_chain"].invoke(question)
+        state["messages"].append({"role": "user", "text": question})
+        state["messages"].append({"role": "assistant", "text": answer})
+        return jsonify({"answer": answer})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # threaded=True lets Flask handle each request in its own thread,
+    # which prevents the debug reloader from resetting long-running connections.
+    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
