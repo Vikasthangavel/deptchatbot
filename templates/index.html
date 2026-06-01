@@ -3,80 +3,204 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Website Chatbot</title>
+    <title>NEURAL//CHAT — Cyberpunk AI Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        --primary: #2563eb;
-        --primary-dark: #1e40af;
-        --primary-light: #dbeafe;
-        --bg: #f8fafc;
-        --panel: #ffffff;
-        --border: #e2e8f0;
-        --text: #0f172a;
-        --text-secondary: #64748b;
-        --success: #10b981;
-        --error: #ef4444;
-        --warning: #f59e0b;
-        --user-bubble: #2563eb;
-        --user-text: #ffffff;
-        --assistant-bubble: #f1f5f9;
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-        --shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 13px rgba(0, 0, 0, 0.05);
-        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 25px 50px rgba(0, 0, 0, 0.1);
+        --cyan:    #00fff9;
+        --magenta: #ff00ff;
+        --yellow:  #f5e642;
+        --green:   #39ff14;
+        --red:     #ff003c;
+        --bg:      #050810;
+        --bg2:     #080d1a;
+        --panel:   #0a0f1e;
+        --panel2:  #0d1428;
+        --border:  #1a2744;
+        --text:    #c8d8f0;
+        --dim:     #4a6080;
+        --glow-c:  0 0 8px #00fff9, 0 0 20px #00fff980, 0 0 40px #00fff940;
+        --glow-m:  0 0 8px #ff00ff, 0 0 20px #ff00ff80, 0 0 40px #ff00ff40;
+        --glow-g:  0 0 8px #39ff14, 0 0 20px #39ff1480;
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
 
       html, body {
-        margin: 0;
-        padding: 0;
         height: 100%;
-        width: 100%;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        background: var(--bg);
         color: var(--text);
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e0e7ff 100%);
-        background-attachment: fixed;
+        font-family: 'Rajdhani', sans-serif;
+        overflow: hidden;
       }
 
-      .app-container {
+      /* ── Scanline overlay ── */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0,0,0,.18) 2px,
+          rgba(0,0,0,.18) 4px
+        );
+        pointer-events: none;
+        z-index: 9999;
+        animation: scanlines 8s linear infinite;
+      }
+
+      @keyframes scanlines {
+        0%   { background-position: 0 0; }
+        100% { background-position: 0 100px; }
+      }
+
+      /* ── Corner decorations ── */
+      .corner {
+        position: fixed;
+        width: 40px; height: 40px;
+        pointer-events: none;
+        z-index: 100;
+      }
+      .corner::before, .corner::after {
+        content: '';
+        position: absolute;
+        background: var(--cyan);
+        box-shadow: var(--glow-c);
+      }
+      .corner::before { width: 100%; height: 2px; top: 0; left: 0; }
+      .corner::after  { width: 2px; height: 100%; top: 0; left: 0; }
+      .corner.tl { top: 12px; left: 12px; }
+      .corner.tr { top: 12px; right: 12px; transform: scaleX(-1); }
+      .corner.bl { bottom: 12px; left: 12px; transform: scaleY(-1); }
+      .corner.br { bottom: 12px; right: 12px; transform: scale(-1); }
+
+      /* ── App shell ── */
+      .app {
         display: flex;
         flex-direction: column;
-        height: 100%;
-        max-width: 1200px;
+        height: 100vh;
+        max-width: 1100px;
         margin: 0 auto;
+        padding: 0 8px;
       }
 
-      .header-section {
-        padding: 28px 24px 20px;
-        background: var(--panel);
+      /* ── Header ── */
+      .header {
+        padding: 20px 24px 16px;
         border-bottom: 1px solid var(--border);
-        box-shadow: var(--shadow-sm);
+        position: relative;
+        flex-shrink: 0;
       }
+
+      .header::after {
+        content: '';
+        position: absolute;
+        bottom: -1px; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyan), var(--magenta), transparent);
+        box-shadow: 0 0 10px var(--cyan);
+      }
+
+      .header-top {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .logo-icon {
+        width: 44px; height: 44px;
+        border: 2px solid var(--cyan);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--glow-c), inset 0 0 12px #00fff920;
+        font-size: 22px;
+        animation: logoPulse 3s ease-in-out infinite;
+        flex-shrink: 0;
+      }
+
+      @keyframes logoPulse {
+        0%,100% { box-shadow: var(--glow-c), inset 0 0 12px #00fff920; }
+        50%      { box-shadow: var(--glow-m), inset 0 0 20px #ff00ff20; }
+      }
+
+      .title-block {}
 
       .title {
-        font-size: 32px;
-        font-weight: 800;
-        margin: 0;
-        color: var(--text);
-        letter-spacing: -0.5px;
+        font-family: 'Orbitron', monospace;
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        line-height: 1;
+        background: linear-gradient(90deg, var(--cyan), var(--magenta));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
+        position: relative;
+      }
+
+      .title::after {
+        content: 'NEURAL//CHAT';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, var(--cyan), var(--magenta));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: glitch 5s infinite;
+        clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+        opacity: 0;
+      }
+
+      @keyframes glitch {
+        0%,95%,100% { opacity: 0; transform: translate(0); }
+        96%          { opacity: .8; transform: translate(-3px, 1px); }
+        97%          { opacity: .8; transform: translate(3px, -1px); }
+        98%          { opacity: .8; transform: translate(-2px, 0); }
+        99%          { opacity: .8; transform: translate(2px, 0); }
       }
 
       .subtitle {
-        margin: 8px 0 0;
-        font-size: 15px;
-        color: var(--text-secondary);
-        font-weight: 400;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        color: var(--dim);
+        letter-spacing: 2px;
+        margin-top: 4px;
+        text-transform: uppercase;
       }
 
+      .header-badges {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .badge {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 10px;
+        padding: 4px 10px;
+        border: 1px solid;
+        border-radius: 2px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .badge.cyan  { border-color: var(--cyan);    color: var(--cyan);    text-shadow: 0 0 8px var(--cyan); }
+      .badge.green { border-color: var(--green);   color: var(--green);   text-shadow: 0 0 8px var(--green); }
+
+      /* ── URL section ── */
       .url-section {
-        padding: 18px 24px;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 14px 24px;
+        background: var(--panel);
         border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
       }
 
       .url-form {
@@ -86,229 +210,345 @@
         align-items: end;
       }
 
-      .form-group label {
-        display: block;
-        font-size: 12px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        color: #334155;
+      .field-label {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 10px;
+        color: var(--cyan);
+        letter-spacing: 3px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+        text-shadow: 0 0 8px var(--cyan);
       }
 
-      .form-group input {
+      .cyber-input {
         width: 100%;
+        background: var(--bg);
         border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 11px 14px;
-        font-size: 14px;
+        color: var(--cyan);
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 13px;
+        padding: 10px 14px;
         outline: none;
-        background: #fff;
-        transition: all 0.2s ease;
+        transition: all .25s ease;
+        clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+        letter-spacing: 1px;
       }
 
-      .form-group input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        background: #f0f9ff;
+      .cyber-input::placeholder { color: var(--dim); }
+
+      .cyber-input:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 1px var(--cyan), inset 0 0 20px #00fff910;
+        color: #fff;
       }
 
-      .button {
+      .cyber-input:disabled { opacity: .4; cursor: not-allowed; }
+
+      /* ── Buttons ── */
+      .cyber-btn {
+        font-family: 'Orbitron', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
         border: none;
-        border-radius: 10px;
-        padding: 11px 18px;
-        font-size: 14px;
-        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
+        padding: 10px 20px;
+        position: relative;
+        transition: all .2s ease;
+        clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
         white-space: nowrap;
       }
 
-      .button.primary {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+      .cyber-btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity .2s;
       }
 
-      .button.primary:hover:not(:disabled) {
-        background: var(--primary-dark);
+      .cyber-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+      .cyber-btn.load {
+        background: transparent;
+        color: var(--cyan);
+        border: 1px solid var(--cyan);
+        box-shadow: 0 0 12px #00fff940;
+        clip-path: none;
+        border-radius: 2px;
+      }
+
+      .cyber-btn.load:hover:not(:disabled) {
+        background: #00fff915;
+        box-shadow: var(--glow-c);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
       }
 
-      .button.secondary {
-        background: #e5e7eb;
-        color: var(--text);
+      .cyber-btn.send {
+        background: linear-gradient(135deg, #00fff920, #ff00ff20);
+        color: var(--magenta);
+        border: 1px solid var(--magenta);
+        box-shadow: 0 0 12px #ff00ff40;
+        clip-path: none;
+        border-radius: 2px;
       }
 
-      .button.secondary:hover:not(:disabled) {
-        background: #d1d5db;
+      .cyber-btn.send:hover:not(:disabled) {
+        background: linear-gradient(135deg, #00fff930, #ff00ff30);
+        box-shadow: var(--glow-m);
         transform: translateY(-1px);
       }
 
-      .button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
+      /* ── Status bar ── */
       .status-bar {
-        padding: 12px 24px;
-        background: var(--primary-light);
-        border-bottom: 1px solid #bfdbfe;
-        font-size: 13px;
-        color: #1e40af;
+        padding: 8px 24px;
+        background: linear-gradient(90deg, #00fff908, transparent);
+        border-bottom: 1px solid #00fff920;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        flex-shrink: 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
+        color: var(--cyan);
+        letter-spacing: 1px;
       }
 
       .status-dot {
-        width: 8px;
-        height: 8px;
+        width: 7px; height: 7px;
         border-radius: 50%;
-        background: var(--success);
-        animation: pulse 2s infinite;
+        background: var(--green);
+        box-shadow: var(--glow-g);
+        animation: blink 2s ease-in-out infinite;
+        flex-shrink: 0;
       }
 
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+      @keyframes blink {
+        0%,100% { opacity: 1; }
+        50%      { opacity: .3; }
       }
 
+      /* ── Alert ── */
       .alert {
-        margin: 16px 24px;
-        padding: 14px 16px;
-        border-radius: 12px;
-        font-size: 14px;
-        border-left: 4px solid;
+        margin: 12px 24px;
+        padding: 12px 16px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 3px solid var(--red);
+        background: #ff003c10;
+        color: #ff6680;
+        letter-spacing: 1px;
       }
 
-      .alert.error {
-        background: #fef2f2;
-        border-left-color: var(--error);
-        color: #7f1d1d;
-      }
-
+      /* ── Chat container ── */
       .chat-container {
         flex: 1;
         overflow-y: auto;
         padding: 20px 24px;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
       }
 
+      .chat-container::-webkit-scrollbar { width: 4px; }
+      .chat-container::-webkit-scrollbar-track { background: transparent; }
+      .chat-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+      .chat-container::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+      /* ── Empty state ── */
       .empty-state {
-        height: 100%;
+        flex: 1;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        color: var(--text-secondary);
         text-align: center;
+        gap: 16px;
         padding: 40px 20px;
+        color: var(--dim);
       }
 
-      .empty-state-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
+      .empty-hex {
+        font-size: 64px;
+        position: relative;
+        filter: drop-shadow(0 0 12px var(--cyan));
+        animation: float 4s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,100% { transform: translateY(0); }
+        50%      { transform: translateY(-12px); }
       }
 
       .empty-state h3 {
-        margin: 0 0 8px;
-        font-size: 18px;
-        color: var(--text);
-        font-weight: 600;
+        font-family: 'Orbitron', monospace;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: var(--cyan);
+        text-shadow: 0 0 10px var(--cyan);
       }
 
       .empty-state p {
-        margin: 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* ── Grid lines ── */
+      .empty-state::before {
+        content: '';
+        position: absolute;
+        width: 200px; height: 200px;
+        border: 1px solid #00fff910;
+        border-radius: 50%;
+        animation: radar 4s linear infinite;
+      }
+
+      @keyframes radar {
+        0%   { transform: scale(0.5); opacity: .8; }
+        100% { transform: scale(2);   opacity: 0; }
+      }
+
+      /* ── Messages ── */
+      .msg-row {
+        display: flex;
+        gap: 10px;
+        animation: msgIn .3s ease-out;
+      }
+
+      @keyframes msgIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .msg-row.user  { justify-content: flex-end; }
+      .msg-row.assistant { justify-content: flex-start; }
+
+      .avatar {
+        width: 30px; height: 30px;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+        align-self: flex-end;
+      }
+
+      .avatar.ai {
+        border: 1px solid var(--cyan);
+        background: #00fff910;
+        box-shadow: 0 0 10px #00fff940;
+        color: var(--cyan);
+        font-family: 'Orbitron', monospace;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .avatar.user-av {
+        border: 1px solid var(--magenta);
+        background: #ff00ff10;
+        box-shadow: 0 0 10px #ff00ff40;
         font-size: 14px;
       }
 
-      .message-group {
-        display: flex;
-        margin-bottom: 16px;
-        gap: 8px;
-        animation: slideIn 0.3s ease-out;
-      }
-
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .message-group.user {
-        justify-content: flex-end;
-      }
-
-      .message {
-        max-width: 70%;
+      .bubble {
+        max-width: 68%;
         padding: 12px 16px;
-        border-radius: 18px;
-        line-height: 1.6;
+        font-size: 14px;
+        line-height: 1.65;
         white-space: pre-wrap;
         word-wrap: break-word;
-        font-size: 14px;
+        position: relative;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 500;
       }
 
-      .message.user {
-        background: var(--user-bubble);
-        color: var(--user-text);
-        border-radius: 18px 4px 18px 18px;
-        box-shadow: var(--shadow-sm);
+      .bubble::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
       }
 
-      .message.assistant {
-        background: var(--assistant-bubble);
-        color: var(--text);
-        border-radius: 4px 18px 18px 18px;
-        border: 1px solid var(--border);
+      /* User bubble */
+      .bubble.user {
+        background: linear-gradient(135deg, #ff00ff18, #ff00ff08);
+        border: 1px solid #ff00ff60;
+        border-radius: 12px 2px 12px 12px;
+        color: #f0c0ff;
+        box-shadow: 0 0 16px #ff00ff20, inset 0 0 16px #ff00ff08;
       }
 
+      /* AI bubble */
+      .bubble.assistant {
+        background: linear-gradient(135deg, #00fff918, #00fff908);
+        border: 1px solid #00fff960;
+        border-radius: 2px 12px 12px 12px;
+        color: #b0f0f8;
+        box-shadow: 0 0 16px #00fff920, inset 0 0 16px #00fff908;
+      }
+
+      /* Corner accents on AI bubble */
+      .bubble.assistant::before {
+        border-top: 2px solid var(--cyan);
+        border-left: 2px solid var(--cyan);
+        width: 10px; height: 10px;
+        top: -1px; left: -1px;
+        border-radius: 0;
+        inset: auto;
+        position: absolute;
+      }
+
+      /* ── Loading bubble ── */
       .loading-bubble {
-        background: var(--assistant-bubble);
-        border: 1px solid var(--border);
-        border-radius: 4px 18px 18px 18px;
-        padding: 12px 16px;
-        max-width: 70px;
-      }
-
-      .loading-dots {
+        background: linear-gradient(135deg, #00fff912, #00fff905);
+        border: 1px solid #00fff940;
+        border-radius: 2px 12px 12px 12px;
+        padding: 14px 18px;
         display: flex;
-        gap: 4px;
         align-items: center;
-        height: 20px;
+        gap: 4px;
+        box-shadow: 0 0 12px #00fff920;
       }
 
       .dot {
-        width: 8px;
-        height: 8px;
+        width: 7px; height: 7px;
         border-radius: 50%;
-        background: var(--text-secondary);
+        background: var(--cyan);
+        box-shadow: 0 0 6px var(--cyan);
         animation: bounce 1.4s infinite;
       }
-
-      .dot:nth-child(1) { animation-delay: -0.32s; }
-      .dot:nth-child(2) { animation-delay: -0.16s; }
+      .dot:nth-child(1) { animation-delay: -.32s; }
+      .dot:nth-child(2) { animation-delay: -.16s; }
       .dot:nth-child(3) { animation-delay: 0s; }
 
       @keyframes bounce {
-        0%, 60%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-10px); }
+        0%,60%,100% { transform: translateY(0);    opacity: 1; }
+        30%          { transform: translateY(-8px); opacity: .7; }
       }
 
+      /* ── Input section ── */
       .input-section {
-        padding: 18px 24px;
-        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        padding: 14px 24px 18px;
+        background: var(--panel);
         border-top: 1px solid var(--border);
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .input-section::before {
+        content: '';
+        position: absolute;
+        top: -1px; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--magenta), var(--cyan), transparent);
+        box-shadow: 0 0 10px var(--magenta);
       }
 
       .input-form {
@@ -318,181 +558,199 @@
         align-items: end;
       }
 
-      .input-form input {
-        width: 100%;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px 16px;
-        font-size: 14px;
-        outline: none;
-        background: #fff;
-        transition: all 0.2s ease;
-      }
-
-      .input-form input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        background: #f0f9ff;
-      }
-
       .input-hint {
         margin-top: 8px;
-        font-size: 12px;
-        color: var(--text-secondary);
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 10px;
+        color: var(--dim);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
 
-      .chat-container::-webkit-scrollbar {
-        width: 6px;
+      .input-hint::before {
+        content: '';
+        display: inline-block;
+        width: 16px; height: 1px;
+        background: var(--dim);
       }
 
-      .chat-container::-webkit-scrollbar-track {
-        background: transparent;
+      /* ── Noise bg texture ── */
+      .app::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+          radial-gradient(ellipse at 20% 50%, #00fff905 0%, transparent 60%),
+          radial-gradient(ellipse at 80% 20%, #ff00ff05 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
       }
 
-      .chat-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-      }
+      .app > * { position: relative; z-index: 1; }
 
-      .chat-container::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-      }
-
-      @media (max-width: 768px) {
-        .url-form,
-        .input-form {
-          grid-template-columns: 1fr;
-        }
-
-        .message {
-          max-width: 100%;
-        }
-
-        .button {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .title {
-          font-size: 24px;
-        }
-
-        .header-section {
-          padding: 20px 16px 16px;
-        }
-
-        .url-section,
-        .input-section {
-          padding: 14px 16px;
-        }
-
-        .chat-container {
-          padding: 14px 16px;
-        }
+      /* ── Responsive ── */
+      @media (max-width: 640px) {
+        .url-form, .input-form { grid-template-columns: 1fr; }
+        .bubble { max-width: 90%; }
+        .title { font-size: 16px; }
+        .header-badges { display: none; }
+        .header, .url-section, .input-section { padding-left: 16px; padding-right: 16px; }
+        .chat-container { padding: 14px 16px; }
       }
     </style>
   </head>
   <body>
-    <div class="app-container">
-      <div class="header-section">
-        <h1 class="title">Website Chatbot</h1>
-        <p class="subtitle">Load a website and ask questions using AI-powered conversation</p>
-      </div>
+    <!-- Corner brackets -->
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
 
-      <div class="url-section">
+    <div class="app">
+
+      <!-- ── Header ── -->
+      <header class="header">
+        <div class="header-top">
+          <div class="logo-icon">⬡</div>
+          <div class="title-block">
+            <h1 class="title">NEURAL//CHAT</h1>
+            <p class="subtitle">AI-Powered Web Intelligence Interface</p>
+          </div>
+          <div class="header-badges">
+            <span class="badge cyan">v2.0.77</span>
+            <span class="badge green">ONLINE</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── URL loader ── -->
+      <section class="url-section">
         <form class="url-form" method="post" id="urlForm">
           <input type="hidden" name="action" value="load">
-          <div class="form-group">
-            <label for="url">Website URL</label>
+          <div>
+            <div class="field-label">// Target URL</div>
             <input
               id="url"
+              class="cyber-input"
               type="text"
               name="url"
-              placeholder="https://example.com"
+              placeholder="https://target-domain.com"
               value="{{ current_url or '' }}"
             >
           </div>
-          <button class="button secondary" type="submit">Load Website</button>
+          <button class="cyber-btn load" type="submit">[ SCAN ]</button>
         </form>
-      </div>
+      </section>
 
+      <!-- ── Status ── -->
       {% if current_url %}
         <div class="status-bar">
           <span class="status-dot"></span>
-          <span>Website loaded: <strong>{{ current_url }}</strong></span>
+          <span>NODE CONNECTED — <strong>{{ current_url }}</strong></span>
         </div>
       {% endif %}
 
+      <!-- ── Error ── -->
       {% if error %}
-        <div class="alert error">{{ error }}</div>
+        <div class="alert">⚠ ERROR :: {{ error }}</div>
       {% endif %}
 
+      <!-- ── Chat ── -->
       <div class="chat-container" id="chatContainer">
         {% if chat_history %}
           {% for message in chat_history %}
-            <div class="message-group {{ message.role }}">
-              <div class="message {{ message.role }}">{{ message.text }}</div>
-            </div>
+            {% if message.role == 'user' %}
+              <div class="msg-row user">
+                <div class="bubble user">{{ message.text }}</div>
+                <div class="avatar user-av">👤</div>
+              </div>
+            {% else %}
+              <div class="msg-row assistant">
+                <div class="avatar ai">AI</div>
+                <div class="bubble assistant">{{ message.text }}</div>
+              </div>
+            {% endif %}
           {% endfor %}
         {% else %}
           <div class="empty-state">
-            <div>
-              <div class="empty-state-icon">🔍</div>
-              <h3>Start a conversation</h3>
-              <p>Enter a website URL above to begin</p>
-            </div>
+            <div class="empty-hex">⬡</div>
+            <h3>AWAITING CONNECTION</h3>
+            <p>Enter a target URL to initialize neural link</p>
           </div>
         {% endif %}
       </div>
 
+      <!-- ── Input ── -->
       <div class="input-section">
         <form class="input-form" method="post" action="/" id="messageForm" onsubmit="handleSubmit(event)">
           <input type="hidden" name="action" value="ask">
           <input type="hidden" name="url" value="{{ current_url or '' }}">
-          <div class="form-group">
-            <label for="question">Your Message</label>
+          <div>
+            <div class="field-label">// Query Input</div>
             <input
               id="question"
+              class="cyber-input"
               type="text"
               name="question"
-              placeholder="Ask anything about the website..."
+              placeholder="Transmit query to neural network..."
               {% if current_url %}autofocus{% endif %}
               {% if not current_url %}disabled{% endif %}
             >
           </div>
-          <button class="button primary" type="submit" id="sendBtn" {% if not current_url %}disabled{% endif %}>
-            Send
+          <button class="cyber-btn send" type="submit" id="sendBtn" {% if not current_url %}disabled{% endif %}>
+            [ TX ]
           </button>
         </form>
-        <div class="input-hint">Answers are based only on the loaded website content</div>
+        <div class="input-hint">Responses derived from scanned target node only</div>
       </div>
-    </div>
+
+    </div><!-- /.app -->
 
     <script>
-      const chatContainer = document.getElementById('chatContainer');
-      const messageForm = document.getElementById('messageForm');
-      const questionInput = document.getElementById('question');
-      const sendBtn = document.getElementById('sendBtn');
+      const chatContainer  = document.getElementById('chatContainer');
+      const messageForm    = document.getElementById('messageForm');
+      const questionInput  = document.getElementById('question');
+      const sendBtn        = document.getElementById('sendBtn');
 
       function scrollToBottom() {
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }
 
       function showLoadingBubble() {
-        const loadingBubble = document.createElement('div');
-        loadingBubble.className = 'message-group';
-        loadingBubble.innerHTML = `
+        const row = document.createElement('div');
+        row.className = 'msg-row assistant';
+        row.innerHTML = `
+          <div class="avatar ai">AI</div>
           <div class="loading-bubble">
-            <div class="loading-dots">
-              <div class="dot"></div>
-              <div class="dot"></div>
-              <div class="dot"></div>
-            </div>
-          </div>
-        `;
-        chatContainer.appendChild(loadingBubble);
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>`;
+        chatContainer.appendChild(row);
         scrollToBottom();
-        return loadingBubble;
+        return row;
+      }
+
+      function appendMessage(role, text) {
+        const emptyState = chatContainer.querySelector('.empty-state');
+        if (emptyState) emptyState.remove();
+
+        const row = document.createElement('div');
+        row.className = `msg-row ${role}`;
+        if (role === 'user') {
+          row.innerHTML = `
+            <div class="bubble user">${escapeHtml(text)}</div>
+            <div class="avatar user-av">👤</div>`;
+        } else {
+          row.innerHTML = `
+            <div class="avatar ai">AI</div>
+            <div class="bubble assistant">${escapeHtml(text)}</div>`;
+        }
+        chatContainer.appendChild(row);
+        scrollToBottom();
       }
 
       function handleSubmit(event) {
@@ -501,69 +759,45 @@
         const question = questionInput.value.trim();
         if (!question) return;
 
-        // Read the current URL from the hidden field
-        const urlField = messageForm.querySelector('input[name="url"]');
+        const urlField  = messageForm.querySelector('input[name="url"]');
         const currentUrl = urlField ? urlField.value : '';
 
-        const emptyState = chatContainer.querySelector('.empty-state');
-        if (emptyState) emptyState.remove();
+        appendMessage('user', question);
 
-        // Show the user's message immediately
-        const userBubble = document.createElement('div');
-        userBubble.className = 'message-group user';
-        userBubble.innerHTML = `<div class="message user">${escapeHtml(question)}</div>`;
-        chatContainer.appendChild(userBubble);
-        scrollToBottom();
-
-        const loadingBubble = showLoadingBubble();
+        const loadingRow = showLoadingBubble();
 
         questionInput.disabled = true;
         sendBtn.disabled = true;
         questionInput.value = '';
 
-        // Call the dedicated JSON /chat endpoint (avoids ERR_CONNECTION_RESET)
         fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: question, url: currentUrl })
+          body: JSON.stringify({ question, url: currentUrl })
         })
-        .then(response => {
-          if (!response.ok) throw new Error('Server error: ' + response.status);
-          return response.json();
+        .then(res => {
+          if (!res.ok) throw new Error('SERVER_ERR_' + res.status);
+          return res.json();
         })
         .then(data => {
-          loadingBubble.remove();
-
-          const text = data.answer || data.error || 'Something went wrong.';
-          const responseBubble = document.createElement('div');
-          responseBubble.className = 'message-group';
-          responseBubble.innerHTML = `<div class="message assistant">${escapeHtml(text)}</div>`;
-          chatContainer.appendChild(responseBubble);
-          scrollToBottom();
-
+          loadingRow.remove();
+          appendMessage('assistant', data.answer || data.error || 'NULL RESPONSE');
           questionInput.disabled = false;
           sendBtn.disabled = false;
           questionInput.focus();
         })
         .catch(err => {
-          console.error('Fetch error:', err);
-          loadingBubble.remove();
-
-          const errorBubble = document.createElement('div');
-          errorBubble.className = 'message-group';
-          errorBubble.innerHTML = `<div class="message assistant">⚠️ Connection error — please try again. (${escapeHtml(err.message)})</div>`;
-          chatContainer.appendChild(errorBubble);
-          scrollToBottom();
-
+          loadingRow.remove();
+          appendMessage('assistant', '⚠ CONNECTION_RESET :: ' + err.message + '\n> Retry transmission.');
           questionInput.disabled = false;
           sendBtn.disabled = false;
         });
       }
 
       function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
       }
 
       window.addEventListener('load', scrollToBottom);
