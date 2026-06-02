@@ -86,7 +86,7 @@ def get_session_state():
 
     return chat_sessions.setdefault(
         session_id,
-        {"url": None, "vectorstore": None, "rag_chain": None, "threshold": 0.5, "messages": []},
+        {"url": None, "vectorstore": None, "rag_chain": None, "threshold": 0.0, "messages": []},
     )
 
 
@@ -104,9 +104,9 @@ def index():
                 error = "Please paste a website URL."
             else:
                 try:
-                    threshold = float(request.form.get("threshold", "0.5"))
+                    threshold = float(request.form.get("threshold", "0.0"))
                 except ValueError:
-                    threshold = 0.5
+                    threshold = 0.0
                 # Reset session for new URL
                 state["url"] = url
                 state["vectorstore"] = None
@@ -118,7 +118,7 @@ def index():
         "index.html",
         error=error,
         current_url=state.get("url"),
-        current_threshold=state.get("threshold", 0.5),
+        current_threshold=state.get("threshold", 0.0),
         chat_history=state.get("messages", []),
     )
 
@@ -137,9 +137,9 @@ def chat():
     question = (data.get("question") or "").strip()
     url = (data.get("url") or "").strip()
     try:
-        threshold = float(data.get("threshold", 0.5))
+        threshold = float(data.get("threshold", 0.0))
     except ValueError:
-        threshold = 0.5
+        threshold = 0.0
 
     # Allow the client to pass the URL/threshold in case the session was lost
     if not state.get("url") and url:
