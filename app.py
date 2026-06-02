@@ -45,8 +45,8 @@ Give clear, helpful answers based on the site content.
 """)
 
 
-def build_rag_chain_for_url(url: str):
-    """Load a URL, build embeddings and a RAG chain for it."""
+def build_vectorstore_for_url(url: str):
+    """Load a URL, build embeddings and a Chroma vectorstore."""
     loader = WebBaseLoader([url])
     documents = loader.load()
 
@@ -56,7 +56,18 @@ def build_rag_chain_for_url(url: str):
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
     vectorstore = Chroma.from_documents(docs, embeddings)
-    retriever = vectorstore.as_retriever()
+    return vectorstore
+
+
+def build_rag_chain_for_vectorstore(vectorstore, threshold: float):
+    """Build a RAG chain for a given vectorstore and similarity threshold."""
+    if threshold <= 0.0:
+        retriever = vectorstore.as_retriever()
+    else:
+        retriever = vectorstore.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={"score_threshold": threshold}
+        )
 
     rag_chain = (
         {"context": retriever, "question": RunnablePassthrough()}
@@ -64,7 +75,6 @@ def build_rag_chain_for_url(url: str):
         | llm
         | StrOutputParser()
     )
-
     return rag_chain
 
 
@@ -76,7 +86,7 @@ def get_session_state():
 
     return chat_sessions.setdefault(
         session_id,
-        {"url": None, "rag_chain": None, "messages": []},
+        {"url": None, "vectorstore": None, "rag_chain": None, "threshold": 0.5, "messages": []},
     )
 
 
@@ -93,16 +103,23 @@ def index():
             if not url:
                 error = "Please paste a website URL."
             else:
+                try:
+                    threshold = float(request.form.get("threshold", "0.5"))
+                except ValueError:
+                    threshold = 0.5
                 # Reset session for new URL
                 state["url"] = url
+                state["vectorstore"] = None
                 state["rag_chain"] = None
+                state["threshold"] = threshold
                 state["messages"] = []
 
     return render_template(
         "index.html",
         error=error,
-        current_url=state["url"],
-        chat_history=state["messages"],
+        current_url=state.get("url"),
+        current_threshold=state.get("threshold", 0.5),
+        chat_history=state.get("messages", []),
     )
 
 
@@ -119,26 +136,37 @@ def chat():
     data = request.get_json(silent=True) or {}
     question = (data.get("question") or "").strip()
     url = (data.get("url") or "").strip()
+    try:
+        threshold = float(data.get("threshold", 0.5))
+    except ValueError:
+        threshold = 0.5
 
-    # Allow the client to pass the URL in case the session was lost
-    if not state["url"] and url:
+    # Allow the client to pass the URL/threshold in case the session was lost
+    if not state.get("url") and url:
         state["url"] = url
+        state["vectorstore"] = None
         state["rag_chain"] = None
+        state["threshold"] = threshold
         state["messages"] = []
 
-    if not state["url"]:
+    if not state.get("url"):
         return jsonify({"error": "Please load a website URL first."})
 
     if not question:
         return jsonify({"error": "Please enter a question."})
 
     try:
-        if state["rag_chain"] is None:
-            state["rag_chain"] = build_rag_chain_for_url(state["url"])
+        if state.get("vectorstore") is None:
+            state["vectorstore"] = build_vectorstore_for_url(state["url"])
+
+        # Rebuild the chain if it is None or if the threshold has changed
+        if state.get("rag_chain") is None or state.get("threshold") != threshold:
+            state["threshold"] = threshold
+            state["rag_chain"] = build_rag_chain_for_vectorstore(state["vectorstore"], threshold)
 
         answer = state["rag_chain"].invoke(question)
-        state["messages"].append({"role": "user", "text": question})
-        state["messages"].append({"role": "assistant", "text": answer})
+        state.setdefault("messages", []).append({"role": "user", "text": question})
+        state.setdefault("messages", []).append({"role": "assistant", "text": answer})
         return jsonify({"answer": answer})
 
     except Exception as e:
