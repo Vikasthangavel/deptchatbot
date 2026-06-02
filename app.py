@@ -55,7 +55,17 @@ def build_vectorstore_for_url(url: str):
 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-    vectorstore = Chroma.from_documents(docs, embeddings)
+    def relevance_score_fn(distance: float) -> float:
+        # Chroma returns cosine distance (1 - similarity) when hnsw:space is cosine.
+        # We convert it back to cosine similarity and bound it to [0, 1].
+        return max(0.0, min(1.0, 1.0 - distance))
+
+    vectorstore = Chroma.from_documents(
+        docs,
+        embeddings,
+        collection_metadata={"hnsw:space": "cosine"},
+        relevance_score_fn=relevance_score_fn
+    )
     return vectorstore
 
 
